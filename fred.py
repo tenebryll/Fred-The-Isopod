@@ -2,7 +2,8 @@ import asyncio
 import discord
 from discord.ext import commands
 
-token = "wadjaw9djaw9duqjdw9jdwjdqwjdqw"  # Replace with your actual token
+token = "wfwnfiuwenfuiwenfiwnfiuufwunfiuwenfuwnefiuwnefiunwefiunwefinuin"  # Replace with your actual token
+owner = "bob" # Replace with your username
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,17 +20,18 @@ async def on_ready():
 @fred.command()
 async def msg(ctx, user: discord.Member, *, message: str):
     """Sends a DM to a user and waits for a response."""
-    if ctx.author.name not in ("mr_numbat", "cinnamon362"):
+    if ctx.author.name not owner:
         return await ctx.send("You are not permitted to run this command")
     try:
+        await ctx.channel.purge(limit=1, check=lambda m: m.author.name)
         await user.send(message)
-        await ctx.send(f'"{message}" sent to "{user.mention}"')
+        await ctx.send(f'"{message}" sent to "{user.mention}"', delete_after=3)
         try:
-            response = await fred.wait_for('message', timeout=180, check=lambda m: m.author == user and m.channel.type == discord.ChannelType.private)
-            await ctx.send(f'Response from {user.mention}: {response.content}')
             await user.send("Awaiting your response..")
+            response = await fred.wait_for('message', timeout=180, check=lambda m: m.author == user and m.channel.type == discord.ChannelType.private)
+            await ctx.send(f'Response from {user.mention}: {response.content}', delete_after=3)
         except asyncio.TimeoutError:
-            await ctx.send(f'No response from {user.mention}')
+            await ctx.send(f'No response from {user.mention}', delete_after=3)
             await user.send("No response processed")
     except Exception as e:
         await ctx.send(f'Error: {e}')
@@ -46,11 +48,12 @@ async def msg_error(ctx, error):
 @fred.command()
 async def say(ctx, destination: discord.TextChannel, *, message: str):
     """Sends a message to a specified text channel."""
-    if ctx.author.name != "mr_numbat":
+    if ctx.author.name != owner:
         return await ctx.send("You are not permitted to run this command")
     try:
+        await ctx.channel.purge(limit=1, check=lambda m: m.author.name)
         await destination.send(message)
-        await ctx.send(f'"{message}" sent to "{destination.mention}"')
+        await ctx.send(f'"{message}" sent to "{destination.mention}"',delete_after=3)
     except Exception as e:
         await ctx.send(f'Error: {e}')
 
@@ -65,17 +68,18 @@ async def say_error(ctx, error):
 
 @fred.command(name="log", help="Sets where deleted and edited messages are sent.")
 async def log(ctx):
-    if ctx.author.name == "mr_numbat":
+    if ctx.author.name == owner:
         global log_channel
         log_channel = ctx.channel.id
-        await ctx.send(f"Log channel set to {ctx.channel.mention}", delete_after=True)
+        await ctx.channel.purge(limit=1, check=lambda m: m.author.name)
+        await ctx.send(f"Log channel set to {ctx.channel.mention}",delete_after=5)
     else:
         await ctx.send("You are not permitted to run this command")
 
 @fred.event
 async def on_message_delete(message):
     """Logs deleted messages"""
-    if message.author.name != "mr_numbat" and log_channel is not None:
+    if message.author.name not in (owner,"Fred The Isopod") and log_channel is not None:
         embed = discord.Embed(title=f"{message.author.name} deleted a message:", color=0xFF0000)
         channel = fred.get_channel(log_channel)
         if channel:
@@ -84,7 +88,7 @@ async def on_message_delete(message):
 @fred.event
 async def on_message_edit(message_before, message_after):
     """Logs edited messages"""
-    if message_before.author.name != "mr_numbat" and log_channel is not None:
+    if message_before.author.name not in (owner,"Fred The Isopod") and log_channel is not None:
         embed = discord.Embed(title=f"{message_before.author.name} edited a message", color=0xFF0000)
         embed.add_field(name=message_before.content, value="Before", inline=False)
         embed.add_field(name=message_after.content, value="After", inline=False)
